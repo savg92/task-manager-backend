@@ -1,0 +1,52 @@
+service: task-manager-backend
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.12 # Or your preferred Python version
+  region: us-east-1 # Choose your preferred AWS region
+  environment:
+    MONGO_URI: ${env:MONGO_URI}
+    JWT_SECRET: ${env:JWT_SECRET}
+  httpApi: # Use HTTP API for simplicity and cost-effectiveness
+    cors: true # Enable CORS for frontend access
+
+functions:
+  createTask:
+    handler: handler.createTask
+    events:
+      - httpApi:
+          path: /tasks
+          method: post
+  getTasks:
+    handler: handler.getTasks
+    events:
+      - httpApi:
+          path: /tasks
+          method: get
+  updateTaskStatus:
+    handler: handler.updateTaskStatus
+    events:
+      - httpApi:
+          path: /tasks/{taskId}/status
+          method: put
+  deleteTask:
+    handler: handler.deleteTask
+    events:
+      - httpApi:
+          path: /tasks/{taskId}
+          method: delete
+  # hello: # Remove or keep as needed
+  #   handler: handler.hello
+  #   events:
+  #     - httpApi:
+  #         path: /hello
+  #         method: get
+
+plugins:
+  - serverless-python-requirements # May still be needed depending on how complex packaging gets, uv is primarily for local env/install
+  - serverless-dotenv-plugin # To load .env locally for sls invoke local
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux # Or true if building on Linux/WSL
