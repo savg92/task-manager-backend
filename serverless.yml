@@ -5,6 +5,7 @@ provider:
   name: aws
   runtime: python3.12 # Or your preferred Python version
   region: us-east-1 # Choose your preferred AWS region
+  pythonBin: /Users/savg/Desktop/task-manager-backend/.venv/bin/python3 # Use the full absolute path
   environment:
     MONGO_URI: ${env:MONGO_URI}
     JWT_SECRET: ${env:JWT_SECRET}
@@ -36,6 +37,19 @@ functions:
       - httpApi:
           path: /tasks/{taskId}
           method: delete
+  registerUser:
+    handler: handler.registerUser
+    events:
+      - httpApi:
+          path: /register
+          method: post
+  loginUser:
+    handler: handler.loginUser
+    events:
+      - httpApi:
+          path: /login
+          method: post
+          
   # hello: # Remove or keep as needed
   #   handler: handler.hello
   #   events:
