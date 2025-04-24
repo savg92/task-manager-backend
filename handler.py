@@ -6,8 +6,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from db import get_tasks_collection
 
-# Assume verify_token is implemented elsewhere and imported here
-from auth_handlers import verify_token
+import auth_handlers
 
 def create_response(status_code: int, body: Any) -> Dict[str, Any]:
     return {
@@ -16,10 +15,11 @@ def create_response(status_code: int, body: Any) -> Dict[str, Any]:
     }
 
 def createTask(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    user_id: Optional[str] = verify_token(event)
+    user_id: Optional[str] = auth_handlers.verify_token(event)
+    if not user_id:
+        user_id = event.get('requestContext', {}).get('authorizer', {}).get('lambda', {}).get('user_id')
     if not user_id:
         return create_response(401, {"error": "Unauthorized"})
-
     try:
         body: Dict[str, Any] = json.loads(event.get('body', '{}'))
         title: Optional[str] = body.get('title')
@@ -52,7 +52,9 @@ def createTask(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def getTasks(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     print("getTasks • incoming headers ->", event.get("headers"))
-    user_id: Optional[str] = verify_token(event)
+    user_id: Optional[str] = auth_handlers.verify_token(event)
+    if not user_id:
+        user_id = event.get('requestContext', {}).get('authorizer', {}).get('lambda', {}).get('user_id')
     print("getTasks • verify_token returned ->", user_id)
     if not user_id:
         return create_response(401, {"error": "Unauthorized"})
@@ -66,7 +68,9 @@ def getTasks(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 
 def updateTaskStatus(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    user_id: Optional[str] = verify_token(event)
+    user_id: Optional[str] = auth_handlers.verify_token(event)
+    if not user_id:
+        user_id = event.get('requestContext', {}).get('authorizer', {}).get('lambda', {}).get('user_id')
     if not user_id:
         return create_response(401, {"error": "Unauthorized"})
     try:
@@ -78,6 +82,10 @@ def updateTaskStatus(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         status: Optional[str] = body.get('status')
         if not status:
             return create_response(400, {"error": "Status is required"})
+
+        allowed_statuses = ["TODO", "IN_PROGRESS", "DONE"]
+        if status not in allowed_statuses:
+            return create_response(400, {"error": f"Invalid status. Must be one of: {', '.join(allowed_statuses)}"})
 
         tasks_collection = get_tasks_collection()
         result = tasks_collection.update_one(
@@ -97,7 +105,9 @@ def updateTaskStatus(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 
 def deleteTask(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    user_id: Optional[str] = verify_token(event)
+    user_id: Optional[str] = auth_handlers.verify_token(event)
+    if not user_id:
+        user_id = event.get('requestContext', {}).get('authorizer', {}).get('lambda', {}).get('user_id')
     if not user_id:
         return create_response(401, {"error": "Unauthorized"})
     try:
@@ -110,9 +120,33 @@ def deleteTask(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         result = tasks_collection.delete_one({"_id": task_id, "userId": user_id})
         if result.deleted_count == 0:
             return create_response(404, {"error": "Task not found"})
-        return create_response(200, {"message": "Task deleted successfully"})
+        return {"statusCode": 204}
     except InvalidId as e:
         return create_response(400, {"error": "Invalid Task ID"})
     except Exception as e:
         print(f"Error deleting task: {e}")
+        return create_response(500, {"error": "Internal Server Error"})
+
+def getTaskById(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """Fetch a single task by ID for the authenticated user."""
+    user_id: Optional[str] = auth_handlers.verify_token(event)
+    if not user_id:
+        user_id = event.get('requestContext', {}).get('authorizer', {}).get('lambda', {}).get('user_id')
+    if not user_id:
+        return create_response(401, {"error": "Unauthorized"})
+    try:
+        params: Dict[str, Any] = event.get('pathParameters', {}) or {}
+        task_id: Optional[str] = params.get('taskId')
+        if not task_id:
+            return create_response(400, {"error": "Task ID is required"})
+
+        tasks_collection = get_tasks_collection()
+        task = tasks_collection.find_one({"_id": task_id, "userId": user_id})
+        if not task:
+            return create_response(404, {"error": "Task not found"})
+        return create_response(200, task)
+    except InvalidId:
+        return create_response(400, {"error": "Invalid Task ID"})
+    except Exception as e:
+        print(f"Error fetching task by ID: {e}")
         return create_response(500, {"error": "Internal Server Error"})

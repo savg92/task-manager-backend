@@ -46,18 +46,36 @@ components:
     Task:
       type: object
       properties:
-        id:
+        _id:
           type: string
+          description: Unique identifier for the task (UUID)
         title:
           type: string
+          description: The title of the task
         description:
           type: string
-        completed:
-          type: boolean
+          description: Detailed description of the task
+        status:
+          type: string
+          description: Current status of the task (e.g., TODO, IN_PROGRESS, DONE)
+        createdAt:
+          type: number
+          format: float
+          description: Timestamp when the task was created (Unix epoch)
+        updatedAt:
+          type: number
+          format: float
+          description: Timestamp when the task was last updated (Unix epoch)
+        userId:
+          type: string
+          description: ID of the user who owns the task
       required:
-        - id
+        - _id
         - title
-        - completed
+        - status
+        - createdAt
+        - updatedAt
+        - userId
     CreateTaskRequest:
       type: object
       properties:
@@ -70,15 +88,19 @@ components:
     UpdateStatusRequest:
       type: object
       properties:
-        completed:
-          type: boolean
+        status:
+          type: string
+          description: The new status for the task
       required:
-        - completed
+        - status
     ErrorResponse:
       type: object
       properties:
-        message:
+        error:
           type: string
+          description: Description of the error
+      required:
+        - error
 paths:
   /register:
     post:
@@ -93,7 +115,13 @@ paths:
         '201':
           description: User registered successfully
         '400':
-          description: Invalid input data
+          description: Invalid input data or Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -120,6 +148,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /tasks:
     post:
       summary: Create a new task
@@ -138,8 +172,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
+        '400':
+          description: Title is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error or Failed to retrieve created task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       summary: Get all tasks for authenticated user
       security:
@@ -155,6 +205,16 @@ paths:
                   $ref: '#/components/schemas/Task'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /tasks/{taskId}/status:
     put:
       summary: Update task status
@@ -180,11 +240,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
+        '400':
+          description: Task ID or Status is required, or Invalid Task ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /tasks/{taskId}:
+    get: 
+      summary: Get a single task by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: taskId
+          schema:
+            type: string
+          required: true
+          description: Task ID
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Task ID is required or Invalid Task ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       summary: Delete a task
       security:
@@ -199,9 +321,64 @@ paths:
       responses:
         '204':
           description: Task deleted successfully
+        '400':
+          description: Task ID is required or Invalid Task ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /docs:
+    get:
+      summary: Get API Documentation HTML
+      description: Serves the static HTML page for API documentation (rendered using Redoc).
+      responses:
+        '200':
+          description: HTML documentation page
+          content:
+            text/html:
+              schema:
+                type: string
+                format: html
+        '500':
+          description: Documentation not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /openapi.yaml:
+    get:
+      summary: Get OpenAPI Specification
+      description: Serves the raw OpenAPI specification file in YAML format.
+      responses:
+        '200':
+          description: OpenAPI specification file
+          content:
+            application/yaml:
+              schema:
+                type: string
+        '500':
+          description: OpenAPI spec not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 security:
   - bearerAuth: []

@@ -8,11 +8,9 @@ import uuid
 import time
 from typing import Any, Dict, Optional
 
-# --- Authentication Dependencies ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 JWT_SECRET = os.environ.get("JWT_SECRET", "fallback-secret-key")
 
-# --- Auth Utility Functions ---
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -29,12 +27,12 @@ def create_access_token(
     encoded_jwt: str = jwt.encode(to_encode, JWT_SECRET, algorithm="HS256")
     return encoded_jwt
 
-# --- Authentication Handlers ---
 def registerUser(
     event: Dict[str, Any],
     context: Any
 ) -> Dict[str, Any]:
     from handler import create_response
+    from pymongo.errors import DuplicateKeyError
     try:
         body: Dict[str, Any] = json.loads(event.get("body", "{}"))
         email: Optional[str] = body.get("email")
@@ -53,7 +51,10 @@ def registerUser(
             "hashedPassword": get_password_hash(password),
             "createdAt": time.time(),
         }
-        users.insert_one(new_user)
+        try:
+            users.insert_one(new_user)
+        except DuplicateKeyError:
+            return create_response(400, {"error": "Email already registered"})
         return create_response(201, {"message": "User registered successfully"})
 
     except Exception as e:
@@ -75,20 +76,20 @@ def loginUser(
 
         users = get_users_collection()
         user: Optional[Dict[str, Any]] = users.find_one({"email": email})
-        if not user or not verify_password(password, user.get("hashedPassword", "")):
+        hashed = user.get("hashedPassword") or user.get("password") if user else None
+        if not user or not verify_password(password, hashed or ""):
             return create_response(401, {"error": "Incorrect email or password"})
 
         token: str = create_access_token(
             data={"sub": user["_id"]},
             expires_delta=timedelta(hours=1),
         )
-        return create_response(200, {"access_token": token, "token_type": "bearer"})
+        return create_response(200, {"token": token})
 
     except Exception as e:
         print(f"Error logging in user: {e}")
         return create_response(500, {"error": "Internal Server Error"})
 
-# --- Token Verification Helper ---
 def verify_token(event: Dict[str, Any]) -> Optional[str]:
     """
     Extracts and verifies a Bearer JWT from the Lambda event.
@@ -108,7 +109,6 @@ def verify_token(event: Dict[str, Any]) -> Optional[str]:
 
     token = auth_header.split(" ", 1)[1]
     try:
-        # jwt.decode returns a Dict[str, Any]
         payload: Dict[str, Any] = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
         print("verify_token: decoded payload ->", payload)
         sub = payload.get("sub")

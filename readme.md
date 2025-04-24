@@ -97,16 +97,24 @@ After deployment, you'll receive HTTP endpoints for all functions.
 | POST   | /login                    | Authenticate and receive a JWT       |
 | POST   | /tasks                    | Create a new task (authenticated)    |
 | GET    | /tasks                    | Fetch all tasks for the user         |
+| GET    | /tasks/{taskId}           | Fetch a single task by ID            |
 | PUT    | /tasks/{taskId}/status    | Update task status (authenticated)   |
 | DELETE | /tasks/{taskId}           | Delete a task (authenticated)        |
-+| GET    | /docs                     | Serve static HTML API documentation  |
+| GET    | /docs                     | Serve static HTML API documentation  |
+| GET    | /openapi.yaml             | Serve the raw OpenAPI specification  |
 
-All `/tasks` routes require an `Authorization: Bearer <token>` header.
+All routes requiring authentication (`/tasks` and sub-routes) need an `Authorization: Bearer <token>` header obtained from the `/login` endpoint.
 
 ## Testing
 
-- `test_db_connection.py` verifies access to MongoDB.
-- Add more unit/integration tests as needed.
+- **Database Connection:** Verify access to MongoDB:
+  ```zsh
+  python test_db_connection.py
+  ```
+- **Unit Tests:** Run the unit test suite using `pytest`:
+  ```zsh
+  pytest -v tests/
+  ```
 
 ## Documentation
 - Raw OpenAPI spec: [`docs/openapi.yaml`](docs/openapi.yaml)
@@ -117,16 +125,27 @@ All `/tasks` routes require an `Authorization: Bearer <token>` header.
 
 ## Project Structure
 ```
-auth_handlers.py   # Registration & login logic
-db.py              # MongoDB client setup
-handler.py         # Task CRUD handlers
-serverless.yml     # Serverless service configuration
-requirements.txt   # Python dependencies
-package.json       # Dev dependencies (Serverless plugins)
-docs/              # API documentation (OpenAPI + HTML)
-tests/             # (future) additional test files
-```  
+.
+├── auth_handlers.py        # User registration & login logic
+├── db.py                   # MongoDB client setup
+├── docs_handlers.py        # Handlers for serving API docs
+├── handler.py              # Task CRUD handlers
+├── open_docs.py            # Script to serve docs locally
+├── package.json            # NPM dev dependencies (Serverless plugins)
+├── readme.md               # This file
+├── requirements.txt        # Python runtime dependencies
+├── serverless.yml          # Serverless service configuration
+├── test_db_connection.py   # DB connection test script
+├── docs/
+│   ├── index.html          # Static HTML documentation page
+│   └── openapi.yaml        # OpenAPI 3.x specification
+└── tests/
+    ├── __init__.py
+    ├── conftest.py         # Pytest fixtures and configuration
+    ├── test_auth_handlers.py # Tests for auth_handlers.py
+    ├── test_docs_handlers.py # Tests for docs_handlers.py
+    └── test_handler.py       # Tests for handler.py
+```
 
-## Contributing
-Contributions are welcome! Please open issues and submit pull requests.
-
+<!-- ## Contributing
+Contributions are welcome! Please open issues and submit pull requests. -->
