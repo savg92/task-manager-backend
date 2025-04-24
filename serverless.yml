@@ -1,18 +1,43 @@
 service: task-manager-backend
-frameworkVersion: '3'
+frameworkVersion: '4'
 
 provider:
   name: aws
-  runtime: python3.12 # Or your preferred Python version
-  region: us-east-1 # Choose your preferred AWS region
-  pythonBin: /Users/savg/Desktop/task-manager-backend/.venv/bin/python3 # Use the full absolute path
+  runtime: python3.12
+  region: us-east-1
+  deploymentBucket:
+    name: task-manager-backend-deploy-bucket
+  httpApi:
+    cors:
+      allowedOrigins:
+        - 'http://localhost:5173'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowCredentials: true
   environment:
     MONGO_URI: ${env:MONGO_URI}
     JWT_SECRET: ${env:JWT_SECRET}
-  httpApi: # Use HTTP API for simplicity and cost-effectiveness
-    cors: true # Enable CORS for frontend access
 
 functions:
+  registerUser:
+    handler: auth_handlers.registerUser
+    events:
+      - httpApi:
+          path: /register
+          method: post
+  loginUser:
+    handler: auth_handlers.loginUser
+    events:
+      - httpApi:
+          path: /login
+          method: post
   createTask:
     handler: handler.createTask
     events:
@@ -37,30 +62,16 @@ functions:
       - httpApi:
           path: /tasks/{taskId}
           method: delete
-  registerUser:
-    handler: handler.registerUser
-    events:
-      - httpApi:
-          path: /register
-          method: post
-  loginUser:
-    handler: handler.loginUser
-    events:
-      - httpApi:
-          path: /login
-          method: post
-          
-  # hello: # Remove or keep as needed
-  #   handler: handler.hello
-  #   events:
-  #     - httpApi:
-  #         path: /hello
-  #         method: get
 
 plugins:
-  - serverless-python-requirements # May still be needed depending on how complex packaging gets, uv is primarily for local env/install
-  - serverless-dotenv-plugin # To load .env locally for sls invoke local
+  - serverless-dotenv-plugin
+  - serverless-python-requirements
 
 custom:
+  dotenv:
+    include:
+      - MONGO_URI
+      - JWT_SECRET
   pythonRequirements:
-    dockerizePip: non-linux # Or true if building on Linux/WSL
+    dockerizePip: true
+    invalidateCaches: true

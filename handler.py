@@ -7,15 +7,11 @@ from bson.errors import InvalidId
 from db import get_tasks_collection
 
 # Assume verify_token is implemented elsewhere and imported here
-from auth import verify_token
+from auth_handlers import verify_token
 
 def create_response(status_code: int, body: Any) -> Dict[str, Any]:
     return {
         "statusCode": status_code,
-        "headers": {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Credentials': True,
-        },
         "body": json.dumps(body, default=str)
     }
 
@@ -55,7 +51,9 @@ def createTask(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return create_response(500, {"error": "Internal Server Error"})
 
 def getTasks(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    print("getTasks • incoming headers ->", event.get("headers"))
     user_id: Optional[str] = verify_token(event)
+    print("getTasks • verify_token returned ->", user_id)
     if not user_id:
         return create_response(401, {"error": "Unauthorized"})
     try:
