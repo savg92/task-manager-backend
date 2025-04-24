@@ -25,9 +25,7 @@ def main() -> None:
         "/task_manager_db?retryWrites=true"
         "&w=majority&appName=Cluster0"
     )
-
-    # uri = "mongodb+srv://savg:strasse1992@cluster0.vm2zz6v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-
+    
     try:
         client: MongoClient = MongoClient(
             uri,

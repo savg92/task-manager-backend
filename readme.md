@@ -108,9 +108,9 @@ All `/tasks` routes require an `Authorization: Bearer <token>` header.
 - Add more unit/integration tests as needed.
 
 ## Documentation
-
-- OpenAPI spec: [`docs/openapi.yaml`](docs/openapi.yaml)
-- HTML docs: [`docs/index.html`](docs/index.html)
+- Raw OpenAPI spec: [`docs/openapi.yaml`](docs/openapi.yaml)
+- Static HTML docs: [`docs/index.html`](docs/index.html) (open directly in your browser)
+- Interactive docs: run `python open_docs.py` to serve and open docs at http://localhost:8000
 
 ## Project Structure
 ```

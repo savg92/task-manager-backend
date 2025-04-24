@@ -3,10 +3,10 @@ info:
   title: Task Manager API
   version: 1.0.0
   description: |
-    API para el registro de usuarios, autenticación y gestión de tareas.
+    API for user registration, authentication, and task management.
 servers:
   - url: https://{your-api-id}.execute-api.us-east-1.amazonaws.com/dev
-    description: Entorno de desarrollo (stage `dev`)
+    description: Development environment (stage `dev`)
 components:
   securitySchemes:
     bearerAuth:
@@ -82,7 +82,7 @@ components:
 paths:
   /register:
     post:
-      summary: Registrar un nuevo usuario
+      summary: Register a new user
       requestBody:
         required: true
         content:
@@ -91,16 +91,16 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201':
-          description: Usuario registrado correctamente
+          description: User registered successfully
         '400':
-          description: Error en los datos de entrada
+          description: Invalid input data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /login:
     post:
-      summary: Autenticar usuario y obtener token JWT
+      summary: Authenticate user and obtain JWT token
       requestBody:
         required: true
         content:
@@ -109,20 +109,20 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Autenticación exitosa
+          description: Successful authentication
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
-          description: Credenciales inválidas
+          description: Invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /tasks:
     post:
-      summary: Crear una nueva tarea
+      summary: Create a new task
       security:
         - bearerAuth: []
       requestBody:
@@ -133,20 +133,20 @@ paths:
               $ref: '#/components/schemas/CreateTaskRequest'
       responses:
         '201':
-          description: Tarea creada exitosamente
+          description: Task created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
         '401':
-          description: No autorizado
+          description: Unauthorized
     get:
-      summary: Obtener todas las tareas del usuario autenticado
+      summary: Get all tasks for authenticated user
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Lista de tareas
+          description: List of tasks
           content:
             application/json:
               schema:
@@ -154,10 +154,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/Task'
         '401':
-          description: No autorizado
+          description: Unauthorized
   /tasks/{taskId}/status:
     put:
-      summary: Actualizar estado de una tarea
+      summary: Update task status
       security:
         - bearerAuth: []
       parameters:
@@ -166,7 +166,7 @@ paths:
           schema:
             type: string
           required: true
-          description: ID de la tarea
+          description: Task ID
       requestBody:
         required: true
         content:
@@ -175,18 +175,18 @@ paths:
               $ref: '#/components/schemas/UpdateStatusRequest'
       responses:
         '200':
-          description: Tarea actualizada exitosamente
+          description: Task updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
         '401':
-          description: No autorizado
+          description: Unauthorized
         '404':
-          description: Tarea no encontrada
+          description: Task not found
   /tasks/{taskId}:
     delete:
-      summary: Eliminar una tarea
+      summary: Delete a task
       security:
         - bearerAuth: []
       parameters:
@@ -195,13 +195,13 @@ paths:
           schema:
             type: string
           required: true
-          description: ID de la tarea
+          description: Task ID
       responses:
         '204':
-          description: Tarea eliminada correctamente
+          description: Task deleted successfully
         '401':
-          description: No autorizado
+          description: Unauthorized
         '404':
-          description: Tarea no encontrada
+          description: Task not found
 security:
   - bearerAuth: []
