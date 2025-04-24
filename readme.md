@@ -99,6 +99,7 @@ After deployment, you'll receive HTTP endpoints for all functions.
 | GET    | /tasks                    | Fetch all tasks for the user         |
 | PUT    | /tasks/{taskId}/status    | Update task status (authenticated)   |
 | DELETE | /tasks/{taskId}           | Delete a task (authenticated)        |
++| GET    | /docs                     | Serve static HTML API documentation  |
 
 All `/tasks` routes require an `Authorization: Bearer <token>` header.
 
@@ -110,7 +111,9 @@ All `/tasks` routes require an `Authorization: Bearer <token>` header.
 ## Documentation
 - Raw OpenAPI spec: [`docs/openapi.yaml`](docs/openapi.yaml)
 - Static HTML docs: [`docs/index.html`](docs/index.html) (open directly in your browser)
-- Interactive docs: run `python open_docs.py` to serve and open docs at http://localhost:8000
+- Interactive docs (local): run `python open_docs.py` to serve and open docs at http://localhost:8000
+- Deployed docs: [https://ngte2hwp1k.execute-api.us-east-1.amazonaws.com/docs](https://ngte2hwp1k.execute-api.us-east-1.amazonaws.com/docs)
+- Swagger UI: [Swagger Editor](https://editor.swagger.io/) (paste the OpenAPI spec)
 
 ## Project Structure
 ```

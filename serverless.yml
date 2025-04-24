@@ -62,6 +62,18 @@ functions:
       - httpApi:
           path: /tasks/{taskId}
           method: delete
+  getDocs:
+    handler: docs_handlers.get_docs
+    events:
+      - httpApi:
+          path: /docs
+          method: get
+  getOpenAPI:
+    handler: docs_handlers.get_openapi
+    events:
+      - httpApi:
+          path: /openapi.yaml
+          method: get
 
 plugins:
   - serverless-dotenv-plugin
