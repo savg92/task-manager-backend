@@ -23,7 +23,7 @@ provider:
         - OPTIONS
       allowCredentials: true
   environment:
-    MONGO_URI: ${env:MONGO_URI}
+    MONGO_URI: "mongodb+srv://${env:MONGO_USER}:${env:MONGO_PASS}@${env:MONGO_HOST}/?retryWrites=true&w=majority"
     JWT_SECRET: ${env:JWT_SECRET}
 
 functions:
@@ -83,7 +83,9 @@ plugins:
 custom:
   dotenv:
     include:
-      - MONGO_URI
+      - MONGO_USER
+      - MONGO_PASS
+      - MONGO_HOST
       - JWT_SECRET
   pythonRequirements:
     dockerizePip: true
